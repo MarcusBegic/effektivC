@@ -20,8 +20,14 @@ int main()
   int m, n;
   scanf("%d%d", &m, &n);
 
-  double* c_vector = calloc(n, sizeof(double));
-  double** a_matrix = make_matrix(m,n);
+  double* c_vector = calloc(n, sizeof(double));    
+  double ** matrix;
+  matrix = calloc(m, sizeof(double*));  
+  for (int j = 0; j<m; j++) {
+    matrix[j] = calloc(n, sizeof(double));
+  }
+  //free(j);
+
   double* b_vector = calloc(m, sizeof(double));
 
   for(int i=0; i<n; i+=1){
@@ -30,7 +36,7 @@ int main()
 
   for(int row=0; row<m; row+=1){
     for(int col=0; col<n; col+=1){
-      scanf("%lf", &a_matrix[row][col]);
+      scanf("%lf", &matrix[row][col]);
     }
   }
 
@@ -53,9 +59,9 @@ int main()
   for(int row=0; row<m; row+=1){
     for(int col=0; col<n; col+=1){
       if(col != n-1){
-        printf("%10.3lfx%d + ", a_matrix[row][col], col);
+        printf("%10.3lfx%d + ", matrix[row][col], col);
       }else{
-        printf("%10.3lfx%d ", a_matrix[row][col], col);
+        printf("%10.3lfx%d ", matrix[row][col], col);
       }
     }
     printf("\u2264 %10.3lf", b_vector[row]);
