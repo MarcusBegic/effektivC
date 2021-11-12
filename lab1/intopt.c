@@ -13,8 +13,6 @@ double** make_matrix(int m, int n)
   return a;
 }
 
-
-
 int main()
 {
   int m, n;
@@ -67,6 +65,10 @@ int main()
     printf("\u2264 %10.3lf", b_vector[row]);
     printf("\n");
   }
+
+  free(matrix);
+  free(b_vector);
+  free(c_vector);
 
   return 0;
 }
