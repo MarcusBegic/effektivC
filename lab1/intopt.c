@@ -51,6 +51,7 @@ int main()
       printf("%s%d ", "x", i);
     }
   }
+  free(c_vector);
   printf("\n");
   printf("\n");
 
@@ -67,8 +68,7 @@ int main()
   }
 
   free(matrix);
-  free(b_vector);
-  free(c_vector);
+  free(b_vector);  
 
   return 0;
 }
