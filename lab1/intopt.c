@@ -66,7 +66,9 @@ int main()
     printf("\u2264 %10.3lf", b_vector[row]);
     printf("\n");
   }
-
+  for(int i=0; i<m; i++){
+    free(matrix[i]);
+  }
   free(matrix);
   free(b_vector);  
 
