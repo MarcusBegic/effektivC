@@ -206,7 +206,7 @@ int main(){
     }
   }
 
-  double* b= calloc(m, sizeof(double));
+  double* b = calloc(m, sizeof(double));
 
   for(int i=0; i<m; i+=1){
     scanf("%lf", &b[i]);
