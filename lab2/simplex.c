@@ -63,7 +63,7 @@ int init(struct simplex_t * s, int m, int n, double ** a, double *b, double *c, 
 
 int select_nonbasic(struct simplex_t *s){
   int i;
-  for(i=0; i< s->n; i++){
+  for(i=0; i<s->n; i++){
     if(s->c[i] > eps){
       return i;
     }
@@ -125,7 +125,7 @@ void pivot(struct simplex_t * s, int row, int col) {
 
 
 double xsimplex(int m, int n, double** a, double* b, double* c, double* x, double y, int* var, int h) {
-  struct simplex_t *s;
+  struct simplex_t *s  = malloc(sizeof (struct simplex_t));
   int i, row, col;
 
   initial(s, m, n, a, b, c, x, y, var);
@@ -135,14 +135,15 @@ double xsimplex(int m, int n, double** a, double* b, double* c, double* x, doubl
     if (col < 0) {
       break;
     }
+    row =-1;
+
     for (i = 0; i < m; i++) {
-      if (a[i][col] > eps && row < 0 && b[i]/a[i][col] < b[row] / a[row][col]) {
+      if (a[i][col] > eps && (row < 0 || b[i]/a[i][col] < b[row] / a[row][col])) {
         row = i;
       }
     }
 
     if (row < 0) {
-      //free(s->var);
       return INF;
     }
 
@@ -213,24 +214,6 @@ int main(){
 
   double * x = calloc(n+1, sizeof(double));
 
-  /* double a[M][N+1]; */
-  /* double b[M]; */
-  /* double c[N]; */
-  /* double x[N+1]; */
-  /* double y; */
-  /* int var[N+M+1]; */
-
-
-  struct simplex_t *s  = malloc(sizeof (struct simplex_t));
-
-  //init(s, m, n, a, b, c, x, 0, NULL);
-
-  /* printf("%d", s->m); */
-  /* printf("%d", s->n); */
-  /* printf("\n"); */
-  /* for(int i=0; i<m+n+1; i++){ */
-  /*   printf("%d", s->var[i]); */
-  /* } */
   double y = simplex(m, n, a, b, c, x, 0.0);
   printf("%lf", y);
 
