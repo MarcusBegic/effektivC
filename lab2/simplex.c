@@ -49,7 +49,7 @@ int init(struct simplex_t * s, int m, int n, double ** a, double *b, double *c, 
   s->var = var;
   if(s->var == NULL){
     s->var = calloc(m+n+1, sizeof(int));
-    for(i=0;i<n+m+1;i++){
+    for(i=0;i<n+m;i++){
       s->var[i] = i;
     }
   }
@@ -72,7 +72,6 @@ int select_nonbasic(struct simplex_t *s){
 }
 int initial(struct simplex_t * s, int m, int n, double ** a, double *b, double *c, double *x, double y, int *var){
   int i,j,k;
-  double w;
   k = init(s,m,n,a,b,c,x,y,var);
   return 1;
 }
@@ -93,7 +92,6 @@ void pivot(struct simplex_t * s, int row, int col) {
   for (i = 0; i<n; i++) {
     if(i != col)
       c[i] = c[i] - c[col] * a[row][i] / a[row][col];
-       
   }
 
   c[col] = -c[col] / a[row][col];
@@ -109,6 +107,12 @@ void pivot(struct simplex_t * s, int row, int col) {
           a[i][j] = a[i][j] - a[i][col] * a[row][j] / a[row][col];
         }
       }
+    }
+  }
+
+  for(i=0; i<m; i++){
+    if(i!=row){
+      a[i][col] = -a[i][col] / a[row][col];
     }
   }
 
