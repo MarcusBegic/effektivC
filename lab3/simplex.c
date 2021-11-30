@@ -31,6 +31,8 @@ struct simplex_t{
 
 int init(struct simplex_t * s, int m, int n, double ** a, double *b, double *c, double *x, double y, int *var){
   int i,k;
+
+  /* printf("%s%d\n", "INITS when we get n ", n); */
   s->n = n;
   s->m = m;
   s->a = a;
@@ -39,6 +41,7 @@ int init(struct simplex_t * s, int m, int n, double ** a, double *b, double *c, 
   s->x = x;
   s->y = y;
   s->var = var;
+  /* printf("%s%d\n", "INITS N IS ", s->n); */
   if(s->var == NULL){
     s->var = calloc(m+n+1, sizeof(int));
     for(i=0;i<n+m;i++){
@@ -63,12 +66,16 @@ int select_nonbasic(struct simplex_t *s){
   return -1;
 }
 
+void pivot(struct simplex_t * s, int row, int col);
+
+double xsimplex(int m, int n, double** a, double* b, double* c, double* x, double y, int* var, int h); 
+
 void prepare(struct simplex_t * s, int k){
-  printf("%s", "reaches prepare");
+  /* printf("%s", "PREPARE REACHED"); */
   int m = s->m;
   int n = s->n;
   int i;
-  for(i = m+n; i<n;i++){
+  for(i = m+n; i>n;i--){
     s->var[i] = s->var[i-1];
   }
   s->var[n] =m+n;
@@ -80,24 +87,22 @@ void prepare(struct simplex_t * s, int k){
   s->c = calloc(n, sizeof(double));
   s->c[n-1] = -1;
   s->n = n;
+  pivot(s,k,n-1);
 }
-
-double xsimplex(int m, int n, double** a, double* b, double* c, double* x, double y, int* var, int h); 
-
-void pivot(struct simplex_t * s, int row, int col);
-
 
 int initial(struct simplex_t * s, int m, int n, double ** a, double *b, double *c, double *x, double y, int *var){
   int i,j,k;
   double w;
   k = init(s,m,n,a,b,c,x,y,var);
-  if(b[k]>=0) return 1;
+  if(b[k]>=0) 
+    return 1;
   prepare(s,k);
+  /* printf("%s%d\n", "s av n ", s->n); */
   n = s->n;
   s->y = xsimplex(m, n, s->a, s->b, s->c, s->x, 0, s->var, 1);
   for(i=0; i<m+n; i++){
     if(s->var[i] == m+n-1){
-      if(s->x[i] > eps){
+      if(abs(s->x[i]) > eps){
         free(s->x);
         free(s->c);
         return 0;
@@ -115,9 +120,20 @@ int initial(struct simplex_t * s, int m, int n, double ** a, double *b, double *
       pivot(s,i-n,j);
     }
   }
+
+  printf("\n%s%d", "n is ", n);
+  printf("%s%d\n", "m is ", m);
+  fflush(stdout);
+
   if(i<n-1){
-    k= s->var[i];  s->var[i] = s->var[n-1]; s->var[n-1] =k;
+    k= s->var[i]; 
+    s->var[i] = s->var[n-1];
+    s->var[n-1] =k;
+
     for(k=0; k<m; k++){
+      printf("%s%d\n", "k is ", k);
+      printf("%s%d\n", "a first elem ", s->a[0][0]);
+      fflush(stdout);
       w = s->a[k][n-1];
       s->a[k][n-1] = s->a[k][i];
       s->a[k][i] =w;
@@ -126,16 +142,16 @@ int initial(struct simplex_t * s, int m, int n, double ** a, double *b, double *
   free(s->c);
   s->c=c;
   s->y=y;
-  for(k=n-1;k<n+m+1;k++){
+  for(k=n-1;k<n+m-1;k++){
     s->var[k] = s->var[k+1];
   }
   n=s->n=s->n-1;
-  double t[100]={0.0};
+  double *t = calloc(n, sizeof(double));
 
   for(k=0;k<n;k++){
     for(j=0; j<n; j++){
       if(k == s->var[j]){
-        t[j] = t[j]+s->c[k];
+        t[j] = t[j] + s->c[k];
         goto next_k;
       }
     }
@@ -153,7 +169,7 @@ int initial(struct simplex_t * s, int m, int n, double ** a, double *b, double *
   for(i=0; i<n; i++){
     s->c[i] = t[i];
   }
-  /* free(t); */
+  free(t);
   free(s->x);
   return 1;
 }
@@ -212,13 +228,16 @@ void pivot(struct simplex_t * s, int row, int col) {
 
 
 double xsimplex(int m, int n, double** a, double* b, double* c, double* x, double y, int* var, int h) {
-  struct simplex_t *s  = malloc(sizeof (struct simplex_t));
+ struct simplex_t s;
   int i, row, col;
+  /* printf("\n%s%d", "SIMPLEX n is ", n); */
+  /* printf("%s%d\n", "SIMPLEX m is ", m); */
 
-  initial(s, m, n, a, b, c, x, y, var);
+  initial(&s, m, n, a, b, c, x, y, var);
 
+  /* printf("\n%s%d", "SIMPLEX AFTER INITIAL n is ", n); */
   while(1) {
-    col = select_nonbasic(s);
+    col = select_nonbasic(&s);
     if (col < 0) {
       break;
     }
@@ -231,45 +250,37 @@ double xsimplex(int m, int n, double** a, double* b, double* c, double* x, doubl
     }
 
     if (row < 0) {
+      free(s.var);
+      s.var = NULL;
       return INF;
     }
 
-    pivot(s, row, col);    
+    pivot(&s, row, col);    
   }
-  for(i=0; i<m; i++){
-    free(s->a[i]);
-  }
-  free(s->a);
-  free(s->c);
 
   if (h==0) {
     for(i = 0; i < n; i++) {
-      if (s->var[i] < n) {
-        x[s->var[i]] = 0;
+      if (s.var[i] < n) {
+        x[s.var[i]] = 0;
       }
     }
 
     for(i = 0; i < m; i++) {
-      if (s->var[n+i] < n) {
-        x[s->var[n+i]] = s->b[i];
+      if (s.var[n+i] < n) {
+        x[s.var[n+i]] = s.b[i];
       }
     }
 
-   free(s->var);
+   free(s.var);
 
   } else {
     for(i = 0; i < n; i++)
       x[i] = 0;
 
     for(i = n; i<n+m; i++)
-      x[i] = s->b[i-n];  
+      x[i] = s.b[i-n];  
   }
-  free(s->b);
-  free(s->x);
-  int temp = s->y;
-  free(s);
-
-  return temp;
+   return s.y;
   
 }
 
@@ -279,11 +290,15 @@ double simplex(int m, int n, double** a, double* b, double* c, double* x, double
 }
 
 
+
 int main(){
 
-
   int m, n;
+  /* printf("%s", "running main "); */
+  fflush(stdout);
   scanf("%d%d", &m, &n);
+  //valgridn didnt detect smack smashing for global but for local
+  // thread sanitizer detected it for both of them.
 
   double* c = calloc(n, sizeof(double));    
   for(int i=0; i<n; i+=1){
@@ -294,7 +309,7 @@ int main(){
 
   a = calloc(m, sizeof(double*));  
   for (int j = 0; j<m; j++) {
-    a[j] = calloc(n, sizeof(double));
+    a[j] = calloc(n+1, sizeof(double));
   }
   for(int row=0; row<m; row+=1){
     for(int col=0; col<n; col+=1){
@@ -308,10 +323,18 @@ int main(){
     scanf("%lf", &b[i]);
   }
 
-  double * x = calloc(n+1, sizeof(double));
+  double * x = calloc(m+n+1, sizeof(double));
 
   double y = simplex(m, n, a, b, c, x, 0.0);
   printf("%lf", y);
+
+  for(int i=0; i<m; i++){
+    free(a[i]);
+  }
+  free(a);
+  free(b);
+  free(c);
+  free(x);
 
   return 0;
 }
