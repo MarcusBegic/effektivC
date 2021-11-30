@@ -6,7 +6,6 @@
 #define eps 10e-6
 #define INF 10e12
 
-
 double** make_matrix(int m, int n)
 {
   double **     a;
@@ -28,13 +27,6 @@ struct simplex_t{
   double *x;
   double y;
   int *var;
-
-  /* double a[M][N+1]; */
-  /* double b[M]; */
-  /* double c[N]; */
-  /* double x[N+1]; */
-  /* double y; */
-  /* int var[N+M+1]; */
 };
 
 int init(struct simplex_t * s, int m, int n, double ** a, double *b, double *c, double *x, double y, int *var){
@@ -76,6 +68,7 @@ int initial(struct simplex_t * s, int m, int n, double ** a, double *b, double *
   return 1;
 }
 
+int glob=0;
 void pivot(struct simplex_t * s, int row, int col) {
   double** a = s->a;
   double* b = s->b;
@@ -109,6 +102,7 @@ void pivot(struct simplex_t * s, int row, int col) {
       }
     }
   }
+  glob+=1;
 
   for(i=0; i<m; i++){
     if(i!=row){
@@ -121,10 +115,9 @@ void pivot(struct simplex_t * s, int row, int col) {
       a[row][i] = a[row][i] / a[row][col];
     }
   }
-
+  glob+=1;
   b[row] = b[row] / a[row][col];
   a[row][col] = 1 / a[row][col];
-
 }
 
 
@@ -152,8 +145,12 @@ double xsimplex(int m, int n, double** a, double* b, double* c, double* x, doubl
     }
 
     pivot(s, row, col);    
-
   }
+  for(i=0; i<m; i++){
+    free(s->a[i]);
+  }
+  free(s->a);
+  free(s->c);
 
   if (h==0) {
     for(i = 0; i < n; i++) {
@@ -168,7 +165,8 @@ double xsimplex(int m, int n, double** a, double* b, double* c, double* x, doubl
       }
     }
 
-    //free(s->var);
+   free(s->var);
+
   } else {
     for(i = 0; i < n; i++)
       x[i] = 0;
@@ -176,8 +174,12 @@ double xsimplex(int m, int n, double** a, double* b, double* c, double* x, doubl
     for(i = n; i<n+m; i++)
       x[i] = s->b[i-n];  
   }
+  free(s->b);
+  free(s->x);
+  int temp = s->y;
+  free(s);
 
-  return s->y;
+  return temp;
   
 }
 
