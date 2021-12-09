@@ -29,6 +29,43 @@ struct simplex_t{
   int *var;
 };
 
+struct node_t{
+  int m;
+  int n;
+  int h;
+  double xh;
+  double ak;
+  double bk;
+  double* min;
+  double *max;
+  double **a;
+  double *b;
+  double *x;
+  double *c;
+  double z;
+}
+
+struct node_t initial_node(int m, int n, double **a, double *b, double* c){
+
+  struct node_t p;
+
+  double barr[m+1];
+  double carr[n+1];
+  double xarr[n+1];
+  double min[n];
+  double max[n];
+
+  p.a = make_matrix(m+1,n+1);
+  p.b = barr;
+  p.c = carr;
+  p.x = xarr;
+  p.min = min;
+  p.max = max;
+  p.m = m;
+  p.n = n;
+
+}
+
 int init(struct simplex_t * s, int m, int n, double ** a, double *b, double *c, double *x, double y, int *var){
   int i,k;
 
@@ -291,6 +328,8 @@ double simplex(int m, int n, double** a, double* b, double* c, double* x, double
 
 
 
+
+
 int main(){
 
   int m, n;
@@ -325,7 +364,10 @@ int main(){
 
   double * x = calloc(m+n+1, sizeof(double));
 
-  double y = simplex(m, n, a, b, c, x, 0.0);
+  /* double y = simplex(m, n, a, b, c, x, 0.0); */
+
+  double y = intopt(m, n, a, b, c, x);
+
   printf("%lf", y);
 
   for(int i=0; i<m; i++){
