@@ -1,10 +1,13 @@
 #include <stdio.h>
 #include <stdlib.h>
+#include <string.h>
 
 #define M 20
 #define N 20
 #define eps 10e-6
 #define INF 10e12
+
+typedef struct node_t node_t;
 
 double** make_matrix(int m, int n)
 {
@@ -30,6 +33,7 @@ struct simplex_t{
 };
 
 struct node_t{
+  node_t* next;
   int m;
   int n;
   int h;
@@ -43,9 +47,9 @@ struct node_t{
   double *x;
   double *c;
   double z;
-}
+};
 
-struct node_t initial_node(int m, int n, double **a, double *b, double* c){
+node_t initial_node(int m, int n, double **a, double *b, double* c){
 
   struct node_t p;
 
@@ -64,12 +68,41 @@ struct node_t initial_node(int m, int n, double **a, double *b, double* c){
   p.m = m;
   p.n = n;
 
+  for(int i=0; i<m+1; i++){
+    memcpy(p.a[i], a[i], sizeof(double)*(n+1));
+  }
+  memcpy(p.b, b, sizeof(double)*(m+1));
+  memcpy(p.c, c, sizeof(double)*(n+1));
+  for(int i=0; i< n; i++){
+    p.min[i] = -INF;
+    p.max[i]= INF;
+  }
+  return p;
+}
+
+node_t* extend (node_t* p,int m, int n, double** a, double* b, double* c, int k, double ak, double bk) {
+  struct node_t q;
+  int i;
+  int j;
+  q.k = k;
+  q.ak = ak;
+  q.bk = bk;
+  if(ak > 0 && p.max[k] < INF){
+    q.m = p.m;
+  }else if(ak < 0 && p.min[k] > 0){
+    q.m = p.m+1;
+  }
+  q.n = p.n;
+  q.h = -1;
+  q.a = make_matrix(q.m+1, q.n+1);
+  double barr[q.m+1];
+  q.b = barr;
+  double 
 }
 
 int init(struct simplex_t * s, int m, int n, double ** a, double *b, double *c, double *x, double y, int *var){
   int i,k;
 
-  /* printf("%s%d\n", "INITS when we get n ", n); */
   s->n = n;
   s->m = m;
   s->a = a;
@@ -78,7 +111,7 @@ int init(struct simplex_t * s, int m, int n, double ** a, double *b, double *c, 
   s->x = x;
   s->y = y;
   s->var = var;
-  /* printf("%s%d\n", "INITS N IS ", s->n); */
+
   if(s->var == NULL){
     s->var = calloc(m+n+1, sizeof(int));
     for(i=0;i<n+m;i++){
@@ -108,7 +141,7 @@ void pivot(struct simplex_t * s, int row, int col);
 double xsimplex(int m, int n, double** a, double* b, double* c, double* x, double y, int* var, int h); 
 
 void prepare(struct simplex_t * s, int k){
-  /* printf("%s", "PREPARE REACHED"); */
+
   int m = s->m;
   int n = s->n;
   int i;
