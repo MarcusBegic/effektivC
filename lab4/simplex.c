@@ -330,9 +330,12 @@ double intopt(int m, int n, double** a, double* b, double* c, double* x) {
     p = h->data;
     succ(p, &h, m, n, a, b, c, p->h, 1, floor(p->xh), z, x);
     succ(p, &h, m, n, a, b, c, p->h, -1, ceil(p->xh), z, x);
-
+    free_node(p);
   }
 
+  if(z <= -INF) {
+    return -INF;
+  }  
   return z;
 }
 
