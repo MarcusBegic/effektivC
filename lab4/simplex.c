@@ -631,8 +631,8 @@ int main(){
   double * x = calloc(m+n+1, sizeof(double));
 
   /* double y = simplex(m, n, a, b, c, x, 0.0); */
-  double y = 0.1;
-  //double y = intopt(m, n, a, b, c, x);
+  //double y = 0.1;
+  double y = intopt(m, n, a, b, c, x);
 
   printf("%lf", y);
 
