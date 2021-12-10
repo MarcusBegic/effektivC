@@ -63,6 +63,7 @@ struct n_list {
 /* push node q to the end of the list*/
 void push(n_list** h, node_t* q) {
   n_list* first = calloc(1, sizeof(n_list));
+  first->data = q;
   first->next = *h; 
   return;
 } 
@@ -116,7 +117,7 @@ node_t* initial_node(int m, int n, double **a, double *b, double* c){
   p->n = n;
   p->k = 0;
 
-  for(int i=0; i<m+1; i++){
+  for(int i=0; i<m; i++){
     memcpy(p->a[i], a[i], sizeof(double)*(n+1));
   }
   memcpy(p->b, b, sizeof(double)*(m+1));
@@ -138,16 +139,27 @@ node_t* extend (node_t* p,int m, int n, double** a, double* b, double* c, int k,
   if(ak > 0 && p->max[k] < INF){
     q->m = p->m;
   }else if(ak < 0 && p->min[k] > 0){
+    q->m = p->m;
+  }else{
     q->m = p->m+1;
   }
   q->n = p->n;
   q->h = -1;
-  q->a = make_matrix(q->m + 1, q->n+1);
+
+  q->a = calloc(q->m+1, sizeof(double*));
+  for(i=0; i<q->m+1;i++){
+    q->a[i] = calloc(q->n+1, sizeof(double));
+  }
+
   q->b = calloc(q->m + 1, sizeof(double));
   q->c = calloc(q->n + 1, sizeof(double));
   q->x = calloc(q->n + 1, sizeof(double));
   q->min = calloc(q->n, sizeof(double));
   q->max = calloc(q->n, sizeof(double));
+
+
+  printf("%d%d\n",q->m, q->n);
+  fflush(stdout);
 
   // copy over p->min, p->max to q!
   for(i=0; i<q->n; i++) {
@@ -158,12 +170,18 @@ node_t* extend (node_t* p,int m, int n, double** a, double* b, double* c, int k,
   q->c[i] = p->c[i];
 
   // copy m first rows of parameter a to q->a
+  //
   for(i=0; i<m+1; i++) {
     for (j=0; j<n+1; j++) {
-      q->a[i][j] = p->a[i][j];
+      printf("%d %d\n", i, j);
+      fflush(stdout);
+      q->a[i][j] = a[i][j];
     }
   }
 
+  /* for(i = 0; i<m+1; i++){ */
+  /*   memcpy(q->a[i],a[i],(n+1)*sizeof(double)); */
+  /* } */
   for (i=0; i < q->m + 1; i++) {
     q->b[i] = p->b[i];
   }
@@ -263,7 +281,7 @@ int branch(node_t *q, double z) {
       q->h = h;
       q->xh = q->x[h];
       
-      for(h = 0; h < q->m; h++) {
+      for(h = 0; h < q->m+1; h++) {
         free(q->a[h]);
       }
 
@@ -292,6 +310,7 @@ void free_node(node_t* q) {
 } 
 
 void succ(node_t* p, n_list** h, int m, int n,double** a, double* b, double* c, int k, double ak, double bk, double zp, double* x) {
+
   struct node_t* q = extend(p, m, n, a, b, c, k, ak, bk);  
   if (q==NULL) {
     return;
@@ -309,11 +328,14 @@ void succ(node_t* p, n_list** h, int m, int n,double** a, double* b, double* c, 
   free_node(q);
 }
 
+
 double intopt(int m, int n, double** a, double* b, double* c, double* x) {
+
   node_t* p = initial_node(m,n,a,b,c);
   n_list* h = create_list(p);
   double z = -INF;
   p->z = simplex(p->m, p->n, p->a, p->b, p->c, p->x, 0);
+
   if (integer(p) ||!isfinite(p->z)) {
     z = p->z;
     if (integer(p)) {
@@ -326,8 +348,8 @@ double intopt(int m, int n, double** a, double* b, double* c, double* x) {
   }
   branch(p, z);
   while(h != NULL) {
-    h = pop(&h);    
     p = h->data;
+    h = pop(&h);    
     succ(p, &h, m, n, a, b, c, p->h, 1, floor(p->xh), z, x);
     succ(p, &h, m, n, a, b, c, p->h, -1, ceil(p->xh), z, x);
     free_node(p);
@@ -615,8 +637,8 @@ int main(){
 
   double ** a;
 
-  a = calloc(m, sizeof(double*));  
-  for (int j = 0; j<m; j++) {
+  a = calloc(m+1, sizeof(double*));  
+  for (int j = 0; j<m+1; j++) {
     a[j] = calloc(n+1, sizeof(double));
   }
   for(int row=0; row<m; row+=1){
