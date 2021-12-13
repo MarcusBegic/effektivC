@@ -77,7 +77,6 @@ n_list* create_list(node_t* initial_node) {
 
 /* Only remove the top element from the list and return the new list*/
 n_list* pop(n_list** h) {
-  node_t* p = (*h)->data;
   n_list* old = *h;
   n_list* tail;
   if (old->next == NULL) { // size of list is 1, return NULL    
@@ -99,29 +98,32 @@ void succ(node_t* p, n_list** h, int m, int n,double** a, double* b, double* c, 
 
 node_t* initial_node(int m, int n, double **a, double *b, double* c){
 
-  struct node_t *p = malloc(sizeof(struct node_t));
-
-  double* barr = calloc(m+1, sizeof(double));
-  double* carr = calloc(n+1, sizeof(double));
-  double* xarr = calloc(n+1, sizeof(double));
-  double* min = calloc(n, sizeof(double));
-  double* max = calloc(n, sizeof(double));
+  node_t *p = malloc(sizeof(node_t));
 
   p->a = make_matrix(m+1,n+1);
-  p->b = barr;
-  p->c = carr;
-  p->x = xarr;
-  p->min = min;
-  p->max = max;
+  p->b = calloc(m+1, sizeof(double));
+  p->c = calloc(n+1, sizeof(double));
+  p->x = calloc(n+1, sizeof(double));
+  p->min = calloc(n, sizeof(double));
+  p->max = calloc(n, sizeof(double));
   p->m = m;
   p->n = n;
   p->k = 0;
 
   for(int i=0; i<m; i++){
-    memcpy(p->a[i], a[i], sizeof(double)*(n+1));
+    for(int y=0; y<n; y++){
+      p->a[i][y] = a[i][y];
+    }
   }
-  memcpy(p->b, b, sizeof(double)*(m+1));
-  memcpy(p->c, c, sizeof(double)*(n+1));
+
+  for(int i=0; i<m; i++){
+    p->b[i] = b[i];
+  }
+
+  for(int i=0; i<n; i++){
+    p->c[i] = c[i];
+  }
+
   for(int i=0; i< n; i++){
     p->min[i] = -INF;
     p->max[i]= INF;
@@ -165,9 +167,11 @@ node_t* extend (node_t* p,int m, int n, double** a, double* b, double* c, int k,
   for(i=0; i<q->n; i++) {
     q->min[i] = p->min[i];
     q->max[i] = p->max[i];
-    q->c[i] = p->c[i];
   }
-  q->c[i] = p->c[i];
+
+  for(i=0; i<n+1;i++){
+    q->c[i] = c[i];
+  }
 
   // copy m first rows of parameter a to q->a
   //
@@ -182,8 +186,9 @@ node_t* extend (node_t* p,int m, int n, double** a, double* b, double* c, int k,
   /* for(i = 0; i<m+1; i++){ */
   /*   memcpy(q->a[i],a[i],(n+1)*sizeof(double)); */
   /* } */
-  for (i=0; i < q->m + 1; i++) {
-    q->b[i] = p->b[i];
+
+  for (i=0; i < q->m; i++) {
+    q->b[i] = b[i];
   }
 
   if(ak > 0) {
@@ -239,14 +244,20 @@ void prune(n_list** h, double zp) {
   while ((*h) != NULL && ((*h)->data)->z < zp) {
     n_list* old = (*h);
     (*h) = (*h)->next; 
-    free_nlist(old);
+    free(old->data->min);
+    free(old->data->max);
+    free(old->data);
+    free(old);
   }
   if (*h != NULL) {
     n_list* curr = *h;
     while (curr->next != NULL) {
       if ((curr->next)->data->z < zp) {
         curr->next = curr->next->next;
-        free_nlist(curr->next);
+        free(curr->data->min);
+        free(curr->data->max);
+        free(curr->data);
+        free(curr);
       }
       curr = curr->next;
     }
@@ -256,6 +267,9 @@ void prune(n_list** h, double zp) {
 void bound(struct node_t* p, n_list** h, double* zp, double* x) {
   if (p->z > *zp) {
     *zp = p->z;
+    for(int i=0; i<p->n;i++){
+      x[i] = p->x[i];
+    }
     prune(h, p->z);
   }
 }
@@ -297,6 +311,7 @@ int branch(node_t *q, double z) {
 }
 
 void free_node(node_t* q) {
+
   free(q->min);
   free(q->max);
   free(q->x);
@@ -325,7 +340,19 @@ void succ(node_t* p, n_list** h, int m, int n,double** a, double* b, double* c, 
     }
   }
 
-  free_node(q);
+  /* free_node(q); */
+
+  free(q->min);
+  free(q->max);
+  /* free(q->x); */
+  /* free(q->b); */
+  /* free(q->c); */
+  /* for(int i=0; i < q->m+1; i++) { */
+  /*   free(q->a[i]); */
+  /* } */
+  /* free(q->a); */
+  free(q);
+
 }
 
 
@@ -343,7 +370,18 @@ double intopt(int m, int n, double** a, double* b, double* c, double* x) {
         x[i] = p->x[i];
       }
     }
-    free_node(p);
+    /* free_node(p); */
+    for(int i=0; i<p->m+1;i++){
+      free(p->a[i]);
+    }
+    free(p->a);
+    free(p->b);
+    free(p->c);
+    free(p->x);
+    free(p->min);
+    free(p->max);
+    free(p);
+    free(h);
     return z;
   }
   branch(p, z);
@@ -352,7 +390,9 @@ double intopt(int m, int n, double** a, double* b, double* c, double* x) {
     h = pop(&h);    
     succ(p, &h, m, n, a, b, c, p->h, 1, floor(p->xh), z, x);
     succ(p, &h, m, n, a, b, c, p->h, -1, ceil(p->xh), z, x);
-    free_node(p);
+    free(p->min);
+    free(p->max);
+    free(p);
   }
 
   if(z <= -INF) {
@@ -425,8 +465,12 @@ int initial(struct simplex_t * s, int m, int n, double ** a, double *b, double *
   int i,j,k;
   double w;
   k = init(s,m,n,a,b,c,x,y,var);
-  if(b[k]>=0) 
+  printf("%d %d %d %d\n",k,b[k]);
+  if(b[k]>=0){
+    printf("return kingen\n");
     return 1;
+  } 
+
   prepare(s,k);
   /* printf("%s%d\n", "s av n ", s->n); */
   n = s->n;
@@ -630,8 +674,8 @@ int main(){
   //valgridn didnt detect smack smashing for global but for local
   // thread sanitizer detected it for both of them.
 
-  double* c = calloc(n, sizeof(double));    
-  for(int i=0; i<n; i+=1){
+  double* c = calloc(n+1, sizeof(double));    
+  for(int i=0; i<n+1; i+=1){
     scanf("%lf", &c[i]);
   }
 
@@ -647,9 +691,9 @@ int main(){
     }
   }
 
-  double* b = calloc(m, sizeof(double));
+  double* b = calloc(m+1, sizeof(double));
 
-  for(int i=0; i<m; i+=1){
+  for(int i=0; i<m+1; i+=1){
     scanf("%lf", &b[i]);
   }
 
@@ -661,9 +705,10 @@ int main(){
 
   printf("%lf", y);
 
-  for(int i=0; i<m; i++){
+  for(int i=0; i<m+1; i++){
     free(a[i]);
   }
+
   free(a);
   free(b);
   free(c);
