@@ -385,20 +385,20 @@ void pivot(simplex_t* s, int row, int col)
     t = s->var[col];
     s->var[col] = s->var[n + row];
     s->var[n + row] = t;
-    s->y = s->y + c[col] * b[row]/a[row][col];
- 
+    double f = 1/a[row][col]; 
+    s->y = s->y + c[col] * b[row]*f;
     for (int i = 0; i < n; i++)
     {
         if (i != col){
-            c[i] = c[i] - c[col] * a[row][i]/a[row][col];
+            c[i] = c[i] - c[col] * a[row][i]*f;
         }
     }
  
-    c[col] = -c[col]/a[row][col];
+    c[col] = -c[col]*f;
  
     for (int i = 0; i < m; i++){
         if(i != row){
-            b[i] = b[i] - a[i][col]*b[row]/a[row][col];
+            b[i] = b[i] - a[i][col]*b[row]*f;
         }
     }
  
@@ -406,7 +406,7 @@ void pivot(simplex_t* s, int row, int col)
         if (i != row){
             for(j= 0; j<n; j++){
                 if(j != col){
-                    a[i][j] = a[i][j] - a[i][col] * a[row][j] / a[row][col];
+                    a[i][j] = a[i][j] - a[i][col] * a[row][j] *f;
                 }
             }
         }
@@ -414,17 +414,17 @@ void pivot(simplex_t* s, int row, int col)
  
     for (i = 0; i < m; i++){
         if (i != row){
-            a[i][col] = -a[i][col] / a[row][col];
+            a[i][col] = -a[i][col] *f;
         }
     }
  
     for (i = 0; i < n; i++){
         if (i != col){
-            a[row][i] = a[row][i] / a[row][col];
+            a[row][i] = a[row][i] *f;
         }   
      }
-    b[row] = b[row] / a[row][col];
-    a[row][col] = 1 / a[row][col];
+    b[row] = b[row] *f;
+    a[row][col] = f;
 }
  
 void prepare(simplex_t* s,int k){
