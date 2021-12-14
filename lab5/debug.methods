@@ -1,0 +1,9 @@
+simplex
+xsimplex
+init
+select_nonbasic
+pivot
+prepare
+initial
+simplex_t
+make_matrix
