@@ -1,0 +1,170 @@
+4) Size command: size --common *.o
+
+   text	   data	    bss	    dec	    hex	filename
+  19044	    272	5093552	5112868	 4e0424	0.o
+  11695	    320	5093552	5105567	 4de79f	1.o
+  12939	    320	5093552	5106811	 4dec7b	2.o
+  35371	    296	5093552	5129219	 4e4403	3.o
+  35371	    296	5093552	5129219	 4e4403	4.o
+  35371	    296	5093552	5129219	 4e4403	5.o
+   9258	    272	5093552	5103082	 4dddea	s.o
+
+
+Using the man command to study "nm", what does T, U, G (or D) mean?
+
+T => The symbol is in the text (code) section
+
+U => Symbol is undefined
+
+G => The symbol is in an initialized data section for small objects. Some object file formats permit more fficient access to small data objects, such as a global int variable as opposed to a large global array.
+
+D => The symbol is in the initialized data section
+
+What does -Os mean? It means optimize for size. -Os enables all -O2 optimizations that do not typically increase code size.
+
+With the diff command we can note that 3.o - 5.o are all equivalent. Only files 0,1,2 are different in the set of object files.
+------------------------------------------------------------------------------------------------------
+
+5) 
+
+Running the command given provides:
+
+    Perm  Towers  Queens   Intmm      Mm  Puzzle   Quick  Bubble    Tree     FFT
+     301     461    1164     769    1014    1370      54     413      84     325
+    Perm  Towers  Queens   Intmm      Mm  Puzzle   Quick  Bubble    Tree     FFT
+     674    1407    2641    1179    1016    3670     136    1080     191    1617
+    Perm  Towers  Queens   Intmm      Mm  Puzzle   Quick  Bubble    Tree     FFT
+     226     404    1015     769    1010     801      55     424     101     378
+    Perm  Towers  Queens   Intmm      Mm  Puzzle   Quick  Bubble    Tree     FFT
+     238     325     867     154     189     969      45     465      77     311
+    Perm  Towers  Queens   Intmm      Mm  Puzzle   Quick  Bubble    Tree     FFT
+     221     323     734      61      58     984      45     465      73     155
+
+
+0:
+    Perm  Towers  Queens   Intmm      Mm  Puzzle   Quick  Bubble    Tree     FFT
+     674    1407    2641    1179    1016    3673     136    1080     191    1617
+1:
+    Perm  Towers  Queens   Intmm      Mm  Puzzle   Quick  Bubble    Tree     FFT
+     226     404    1015     768    1010     801      54     424     101     378
+2:
+    Perm  Towers  Queens   Intmm      Mm  Puzzle   Quick  Bubble    Tree     FFT
+     237     325     871     154     189     968      45     466      77     311
+3:
+    Perm  Towers  Queens   Intmm      Mm  Puzzle   Quick  Bubble    Tree     FFT
+     261     324     911      76      58    1174      49     475      88     192
+4:
+same as 3
+5:
+same as 3
+
+
+------------------------------------------------------------------------------------------------------
+6)
+Everytime we compile a C program with optimization level 3 or higher we include the -ftree-vectorize flag. In the code we can see patterns where this vectorization is applicable, e.g.
+
+------------------------------------------------------------------------------------------------------
+7)
+################################
+for ( i = 1; i <= n; i++ ) {
+	z[i].rp = sqrinv*z[i].rp;
+	z[i].ip = -sqrinv*z[i].ip;
+}
+################################
+
+When using vim and grepping for "stvx" we found a few different instructions for storing a vector register to memory.
+
+Looking for other vector instructions we could only find "lvx".
+------------------------------------------------------------------------------------------------------
+8)
+-fprofile-generate used to produce a profile used for recompilation. To optimize the program based on the profile produced by the previous command we can use -fprofile-use
+
+Iterations:
+1: Done without using -fprofile-use
+    Perm  Towers  Queens   Intmm      Mm  Puzzle   Quick  Bubble    Tree     FFT
+     349     636    1324      61      58    1032      50     428      79     160
+2: Now recompiled
+    Perm  Towers  Queens   Intmm      Mm  Puzzle   Quick  Bubble    Tree     FFT
+     242     242     455      44      54     698      46     468      79     237
+3: 
+    Perm  Towers  Queens   Intmm      Mm  Puzzle   Quick  Bubble    Tree     FFT
+     242     242     453      44      54     697      46     468      79     237
+
+Barely no change when running the program multiple times afterwards
+
+------------------------------------------------------------------------------------------------------
+9)
+
+we use the -fprofile-arcs and -ftest-coverage on the c program. Then gcov on the program.
+
+
+------------------------------------------------------------------------------------------------------
+10)
+
+x2, using -flto flag:
+640:   02 00 4c 3c     addis   r2,r12,2
+ 644:   c0 78 42 38     addi    r2,r2,30912
+ 648:   a6 02 08 7c     mflr    r0
+ 64c:   fe ff 82 3c     addis   r4,r2,-2
+ 650:   17 00 a0 38     li      r5,23
+ 654:   90 8a 84 38     addi    r4,r4,-30064
+ 658:   01 00 60 38     li      r3,1
+ 65c:   10 00 01 f8     std     r0,16(r1)
+ 660:   a1 ff 21 f8     stdu    r1,-96(r1)
+ 664:   9d ff ff 4b     bl      600 <00000121.plt_call.__printf_chk@@GLIBC_2.17>
+ 668:   18 00 41 e8     ld      r2,24(r1)
+ 66c:   60 00 21 38     addi    r1,r1,96
+ 670:   17 00 60 38     li      r3,23
+ 674:   10 00 01 e8     ld      r0,16(r1)
+ 678:   a6 03 08 7c     mtlr    r0
+ 67c:   20 00 80 4e     blr
+ 680:   00 00 00 00     .long 0x0
+ 684:   00 00 00 01     .long 0x1000000
+ 688:   80 00 00 00     .long 0x80
+
+
+Without -flto flag:
+ 640:   02 00 4c 3c     addis   r2,r12,2
+ 644:   c0 78 42 38     addi    r2,r2,30912
+ 648:   a6 02 08 7c     mflr    r0
+ 64c:   f8 ff e1 fb     std     r31,-8(r1)
+ 650:   0d 00 80 38     li      r4,13
+ 654:   0a 00 60 38     li      r3,10
+ 658:   10 00 01 f8     std     r0,16(r1)
+ 65c:   91 ff 21 f8     stdu    r1,-112(r1)
+ 660:   e1 01 00 48     bl      840 <p0>
+ 664:   00 00 00 60     nop
+ 668:   fe ff 82 3c     addis   r4,r2,-2
+ 66c:   d0 8a 84 38     addi    r4,r4,-30000
+ 670:   78 1b 7f 7c     mr      r31,r3
+ 674:   78 1b 65 7c     mr      r5,r3
+ 678:   01 00 60 38     li      r3,1
+ 67c:   85 ff ff 4b     bl      600 <00000047.plt_call.__printf_chk@@GLIBC_2.17>
+ 680:   18 00 41 e8     ld      r2,24(r1)
+ 684:   70 00 21 38     addi    r1,r1,112
+ 688:   78 fb e3 7f     mr      r3,r31
+ 68c:   10 00 01 e8     ld      r0,16(r1)
+ 690:   f8 ff e1 eb     ld      r31,-8(r1)
+ 694:   a6 03 08 7c     mtlr    r0
+ 698:   20 00 80 4e     blr
+ 69c:   00 00 00 00     .long 0x0
+ 6a0:   00 00 00 01     .long 0x1000000
+ 6a4:   80 01 00 00     .long 0x180
+
+We note that there are plenty of more instructions in the file that does not use -flto flag.
+
+-flto is link time optimization.
+
+------------------------------------------------------------------------------------------------------
+11)
+
+What we found was the "xvmulsp" instruction which is a Vector Single-Precision Elementary Arithmetic Instructions
+
+------------------------------------------------------------------------------------------------------
+12)
+
+clang := 3.133s
+gcc := 1.339s
+ibm := 0.234s
+nvidia := 0.488s
+
