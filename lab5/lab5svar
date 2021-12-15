@@ -1,0 +1,27 @@
+------------a.c------------------
+Guessing about 40 instructions for this
+
+
+Cycle for the first C is cycle nr 27
+
+First is 13; The last floating point is the lop id 713 since its 7 instructions and 100 iterations
+
+
+The clock cycle for this is 317
+
+------------b.c------------------
+
+Guessing one loop is about 11 clock cycles
+
+Turns out its the same amount of intructions but the fadd is replaced with fmadd.
+
+This finished at clock cycle 654.
+This is because fmadd is a much more costly instruction than fadd. due it being multiplication
+
+--------------------intopt.c-----------
+the biggest stalls are from fmadd, fmul, fneg, compare
+basically all floating point
+
+
+Rename register is to abstract logical and fysical registers.
+It is done to avoid false data depence rising from reuse of registers.
