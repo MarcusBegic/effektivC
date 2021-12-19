@@ -10,8 +10,6 @@
  
 typedef struct simplex_t simplex_t;
 typedef struct node_t node_t;
-typedef struct set_t set_t;
-typedef struct list_t list_t;
 typedef struct list_n list_n;
  
 struct list_n {
@@ -49,45 +47,6 @@ struct node_t {
     int id;
 };
  
-struct set_t {
-    node_t* head; 
-    int size;   
-};
- 
-struct list_t {
-    list_t* next;
-    node_t* data; 
-};
- 
-list_t* new_list(node_t* data){
-    list_t* list;
-    list = malloc(sizeof(list_t));
-    list->next = NULL;
-    list->data = data; 
-    return list;
-}
- 
-node_t* pop(list_t* head_ref){
-    list_t* temp = head_ref;
-    if(head_ref != NULL){
-        head_ref = head_ref->next;
-    }
-    return temp->data;
-}
- 
-void* append(list_t** head_ref,node_t* data){
-        list_t* new = new_list(data);
-        list_t* last = *head_ref;
-        if(head_ref == NULL){
-            *head_ref = new;
-        }else{
-            while(last->next != NULL){
-                last = last->next;
-            }
-        }
-        last->next = new;
-        new->next = *head_ref;
-}
  
 double** make_matrix(int m, int n); 
  
@@ -96,16 +55,7 @@ int is_integer(double* xp);
 double simplex(int m, int n, double** a, double* b, double* c, double* x, double y);
  
 int integer(node_t* p);
- 
- 
-void add(set_t* set, node_t* node){
-    node->next = set->head;
-    set->head = node;
-    set->size++;
-    node->id = rand();
-}
- 
- 
+  
  
 node_t* initial_node(int m, int n, double** a, double* b, double* c) {
     node_t* p = malloc(sizeof(node_t));
@@ -148,28 +98,7 @@ node_t* initial_node(int m, int n, double** a, double* b, double* c) {
  
     return p;
 }
- 
- 
- 
-void free_node(node_t* n){
-    free(n->max);
-    free(n->min);
-    free(n->b);
-    free(n->c);
-    free(n->x);
- 
-    if (n->a != NULL){
-        for(int i = 0; i < n->m+1; i++){
-            free(n->a[i]);
-        }
-    }
- 
-    free(n->a);
-    free(n);
-}
- 
- 
- 
+  
 node_t* extend (node_t* p,int m, int n, double** a, double* b, double* c, int k, double ak, double bk) {
  
     assert(n>0);
@@ -276,9 +205,7 @@ void bound(node_t* p,list_n** h, double* zp, double* x){
  
 int branch(node_t* q, double z){
     double min, max;
- 
-    //printf(" Q->z: %lf , z: %lf \n", q->z,z );
- 
+  
     if(q->z < z){
         return 0;
     }
@@ -387,42 +314,61 @@ void pivot(simplex_t* s, int row, int col)
     s->var[n + row] = t;
     double f = 1/a[row][col]; 
     s->y = s->y + c[col] * b[row]*f;
-    for (int i = 0; i < n; i++)
-    {
-        if (i != col){
-            c[i] = c[i] - c[col] * a[row][i]*f;
-        }
-    }
- 
+
     c[col] = -c[col]*f;
- 
-    for (int i = 0; i < m; i++){
-        if(i != row){
-            b[i] = b[i] - a[i][col]*b[row]*f;
+
+    for (i = 0; i < col; i++) {
+        c[i] += c[col] * a[row][i];
+    }
+
+    for (i = col + 1; i<n; i++) {
+        c[i] += c[col] * a[row][i];
+    }
+
+    for(i = 0; i < row; i++) {
+        b[i] -= a[i][col]*b[row]*f;
+    }
+
+    for (i = row + 1; i < m; i++) {
+        b[i] -= a[i][col]*b[row]*f;
+    }
+
+    for(i=0; i < row; i++) {
+        for (j=0; j < col; j++) {
+            a[i][j] -= a[i][col] * a[row][j] *f;
+        }
+        for (j=col + 1; j < n; j++) {
+            a[i][j] -= a[i][col] * a[row][j] *f;
         }
     }
- 
-    for (i = 0; i < m; i++){
-        if (i != row){
-            for(j= 0; j<n; j++){
-                if(j != col){
-                    a[i][j] = a[i][j] - a[i][col] * a[row][j] *f;
-                }
-            }
+
+    for(i=row + 1; i < m; i++) {
+        for (j=0; j < col; j++) {
+            a[i][j] -= a[i][col] * a[row][j] *f;
+        }
+        for (j=col + 1; j < n; j++) {
+            a[i][j] -= a[i][col] * a[row][j] *f;
         }
     }
- 
-    for (i = 0; i < m; i++){
-        if (i != row){
-            a[i][col] = -a[i][col] *f;
-        }
+
+    // Change loop structure to loop until row index and then start after row index
+    
+    for(i = 0; i < row; i++) {
+        a[i][col] = -a[i][col] * f;
     }
- 
-    for (i = 0; i < n; i++){
-        if (i != col){
-            a[row][i] = a[row][i] *f;
-        }   
-     }
+
+    for(i=row+1; i<m; i++) {
+        a[i][col] = -a[i][col] * f;
+    }
+    
+    for (i=0; i < col; i++) {
+        a[row][i] *= f;
+    }
+
+    for (i=col + 1; i < n; i++) {
+        a[row][i] *= f;
+    }
+
     b[row] = b[row] *f;
     a[row][col] = f;
 }
@@ -437,16 +383,12 @@ void prepare(simplex_t* s,int k){
     for (i =m+n; i>n;i--){
         s->var[i] = s->var[i-1];
     }
-    // This memory might already be allocated on row 38 
     s->var[n] = m+n;
     n++;
-    //printf("%d \n", n);
  
     for (i = 0; i < m; i++){
-        s->a[i][n-1] = -1;      // TODO: THIS ROW IS STRANGE IN SUDOCODE
+        s->a[i][n-1] = -1;  
     }
- 
- 
  
     s->x = calloc(m+n, sizeof(double));
     s->c = calloc(m+n, sizeof(double));
@@ -454,7 +396,6 @@ void prepare(simplex_t* s,int k){
     s->c[n-1] = -1;
     s->n = n;
     pivot(s,k,n-1);
- 
 }
  
 double select_nonbasic(simplex_t* s)
@@ -589,11 +530,31 @@ double xsimplex(int m, int n, double** a, double* b, double* c, double* x, doubl
     while ((col = select_nonbasic(&s)) >= 0 )
     {
         row =  -1; 
+        // i=0;
+        // while (row < 0 && i < m) {
+        //     if (a[i++][col] > EPS) {
+        //         row = i;
+        //         break;
+        //     }                
+        // }   
+
+        // if (row < 0){
+        //     free(s.var);
+        //     s.var = NULL;
+        //     return INFINITY;
+        // }        
+        
+        // for (i=row; i < m; i++) {
+        //     if ((a[i][col] > EPS) && ((b[i] * a[row][col]) < (b[row] * (a[i][col]) )))
+        //         row = i;
+        // }
+
         for (i = 0; i < m; i++){
-            if((a[i][col] > EPS) && ((row < 0) || ((b[i] / (a[i][col]) < (b[row]/ a[row][col] ))))) {
+            if((a[i][col] > EPS) && ((row < 0) || ((b[i] * a[row][col]) < (b[row] * (a[i][col]) )))) {
                 row = i;
             }
         }
+
         if (row < 0){
             free(s.var);
             s.var = NULL;
@@ -730,3 +691,73 @@ double intopt(int m, int n, double** a, double* b, double* c, double* x){
         return z;
     }
 }
+
+
+// int main(int argc, char** argv){
+//     int     m;
+//     int     n;
+//     scanf("%d %d\n", &m, &n);
+//     printf("m = %d, n = %d\n",m,n);
+//     double** matrix;
+    
+//     matrix = calloc(m+1, sizeof(double*));
+//     for (int i = 0; i < m +1; i++){
+//         matrix[i] = calloc(n+1, sizeof(double));
+//     }
+    
+    
+//     double* c_vector = calloc(n+1, sizeof(double));
+//     double* b_vector = calloc(m+1, sizeof(double));
+//     double* x_vector = calloc(n, sizeof(double));
+//     double y;
+//     int i;
+//     int j; 
+    
+//     for(i = 0; i < n; i++){
+//         scanf("%lf", &c_vector[i]);
+//     }
+    
+    
+//     for(i = 0;i < m; i++){
+//         for(j = 0; j < n; j++){
+//             scanf("%lf", &matrix[i][j]);
+//         }
+//     }
+    
+    
+//     for(j = 0; j < m; j++){
+//         scanf("%lf", &b_vector[j]);
+//     }
+    
+    
+//     printf("max z =");
+    
+//     for(j = 0; j < n; j++){
+//         printf("%10.3lf x%d ", c_vector[j],j);
+//     }
+    
+//     printf("\n");
+    
+//     for(i = 0; i < m; i++){
+//         for(j = 0; j < n; j++){
+//             printf("%10.3lf  x%d", matrix[i][j], j); 
+//         }
+//         printf(" <= %10.3lf", b_vector[i]);
+//         printf("\n");
+//     }
+    
+    
+    
+//     int simp = intopt(m, n, matrix, b_vector, c_vector, x_vector);
+    
+//     printf("%d \n", simp); 
+    
+//     free(c_vector);
+//     free(b_vector);
+//     free(x_vector);
+//     for(i = 0; i < m+1; i++){
+//         free(matrix[i]);
+//     }
+//     free(matrix);
+// } 
+ 

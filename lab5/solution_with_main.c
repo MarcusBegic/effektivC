@@ -322,16 +322,8 @@ void pivot(simplex_t* s, int row, int col)
     }
  
     c[col] = -c[col]*f;
-
-    // for(i = 0; i < row; i++) {
-    //     b[i] -= a[i][col]*b[row]*f;
-    // }
-
-    // for (i = row + 1; i < m; i++) {
-    //     b[i] -= a[i][col]*b[row]*f;
-    // }
  
-    for (i = 0; i < m; i++){
+    for (int i = 0; i < m; i++){
         if(i != row){
             b[i] = b[i] - a[i][col]*b[row]*f;
         }
@@ -360,15 +352,7 @@ void pivot(simplex_t* s, int row, int col)
             a[i][col] = -a[i][col] *f;
         }
     }
-    
-    // for (i=0; i < col; i++) {
-    //     a[row][i] *= f;
-    // }
-
-    // for (i=col + 1; i < n; i++) {
-    //     a[row][i] *= f;
-    // }
-
+ 
     for (i = 0; i < n; i++){
         if (i != col){
             a[row][i] = a[row][i] *f;
@@ -678,71 +662,71 @@ double intopt(int m, int n, double** a, double* b, double* c, double* x){
 }
 
 
-// int main(int argc, char** argv){
-//     int     m;
-//     int     n;
-//     scanf("%d %d\n", &m, &n);
-//     printf("m = %d, n = %d\n",m,n);
-//     double** matrix;
+int main(int argc, char** argv){
+    int     m;
+    int     n;
+    scanf("%d %d\n", &m, &n);
+    printf("m = %d, n = %d\n",m,n);
+    double** matrix;
     
-//     matrix = calloc(m+1, sizeof(double*));
-//     for (int i = 0; i < m +1; i++){
-//         matrix[i] = calloc(n+1, sizeof(double));
-//     }
-    
-    
-//     double* c_vector = calloc(n+1, sizeof(double));
-//     double* b_vector = calloc(m+1, sizeof(double));
-//     double* x_vector = calloc(n, sizeof(double));
-//     double y;
-//     int i;
-//     int j; 
-    
-//     for(i = 0; i < n; i++){
-//         scanf("%lf", &c_vector[i]);
-//     }
+    matrix = calloc(m+1, sizeof(double*));
+    for (int i = 0; i < m +1; i++){
+        matrix[i] = calloc(n+1, sizeof(double));
+    }
     
     
-//     for(i = 0;i < m; i++){
-//         for(j = 0; j < n; j++){
-//             scanf("%lf", &matrix[i][j]);
-//         }
-//     }
+    double* c_vector = calloc(n+1, sizeof(double));
+    double* b_vector = calloc(m+1, sizeof(double));
+    double* x_vector = calloc(n, sizeof(double));
+    double y;
+    int i;
+    int j; 
+    
+    for(i = 0; i < n; i++){
+        scanf("%lf", &c_vector[i]);
+    }
     
     
-//     for(j = 0; j < m; j++){
-//         scanf("%lf", &b_vector[j]);
-//     }
+    for(i = 0;i < m; i++){
+        for(j = 0; j < n; j++){
+            scanf("%lf", &matrix[i][j]);
+        }
+    }
     
     
-//     printf("max z =");
-    
-//     for(j = 0; j < n; j++){
-//         printf("%10.3lf x%d ", c_vector[j],j);
-//     }
-    
-//     printf("\n");
-    
-//     for(i = 0; i < m; i++){
-//         for(j = 0; j < n; j++){
-//             printf("%10.3lf  x%d", matrix[i][j], j); 
-//         }
-//         printf(" <= %10.3lf", b_vector[i]);
-//         printf("\n");
-//     }
+    for(j = 0; j < m; j++){
+        scanf("%lf", &b_vector[j]);
+    }
     
     
+    printf("max z =");
     
-//     int simp = intopt(m, n, matrix, b_vector, c_vector, x_vector);
+    for(j = 0; j < n; j++){
+        printf("%10.3lf x%d ", c_vector[j],j);
+    }
     
-//     printf("%d \n", simp); 
+    printf("\n");
     
-//     free(c_vector);
-//     free(b_vector);
-//     free(x_vector);
-//     for(i = 0; i < m+1; i++){
-//         free(matrix[i]);
-//     }
-//     free(matrix);
-// } 
+    for(i = 0; i < m; i++){
+        for(j = 0; j < n; j++){
+            printf("%10.3lf  x%d", matrix[i][j], j); 
+        }
+        printf(" <= %10.3lf", b_vector[i]);
+        printf("\n");
+    }
+    
+    
+    
+    int simp = intopt(m, n, matrix, b_vector, c_vector, x_vector);
+    
+    printf("%d \n", simp); 
+    
+    free(c_vector);
+    free(b_vector);
+    free(x_vector);
+    for(i = 0; i < m+1; i++){
+        free(matrix[i]);
+    }
+    free(matrix);
+} 
  
